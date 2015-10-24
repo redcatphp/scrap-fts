@@ -2,18 +2,27 @@
 namespace Wild\ScrapFTS;
 class Crawler{
 	private $urls = [];
-	private $uris = [];
 	private $hashs = [];
 	private $contents = [];
 	private $contentCallback;
-	function __construct($contentCallback=null){
+	private $enableSubdomains;
+	private $domainSubstitution;
+	function __construct($contentCallback=null,$domainSubstitution=null){
 		if($contentCallback)
 			$this->setContentCallback($contentCallback);
+		if($domainSubstitution)
+			$this->setDomainSubstitution($domainSubstitution);
+	}
+	function setDomainSubstitution($domainSubstitution){
+		$this->domainSubstitution = $domainSubstitution;
 	}
 	function setContentCallback($contentCallback){
 		$this->contentCallback = $contentCallback;
 	}
-	function scrap($url,$selector='body',$uri=''){
+	function enableSubdomains($enableSubdomains=true){
+		$this->enableSubdomains = $enableSubdomains;
+	}
+	function scrap($url,$selector='body'){
 		if(in_array($url,$this->urls))
 			return;
 			
@@ -25,7 +34,6 @@ class Crawler{
 			return;
 		
 		$this->urls[] = $url;
-		$this->uris[] = $uri;
 		
 		$dom = new \DOMDocument('1.0');
 		@$dom->loadHTMLFile($url);
@@ -50,43 +58,55 @@ class Crawler{
 			$href = $element->getAttribute('href');
 			$path = ltrim($href, '/');
 			$path = rtrim($href, '#');
-			if(strpos($href,'://')!==false||substr($href,0,7)=='mailto:')
+			
+			if(substr($href,0,7)=='mailto:'||substr($href,0,11)=='javascript:')
 				continue;
+			
+			if(strpos($href,'://')!==false){
+				if(!$this->enableSubdomains)
+					continue;
+				if($this->getDomain($baseHref)!=$this->getDomain($href))
+					continue;
+			}
 			
 			$p = strpos($path,'#');
 			if($p){
 				$hash = substr($path,$p+1);
 				$path = substr($path,0,$p);
-				if(!isset($this->hashs[$path])||!in_array($hash,$this->hashs[$path]))
-					$this->hashs[$path][] = $hash;
+			}
+			if(strpos($href,'://')===false){
+				$href = $baseHref;
+				if($path)
+					$href = rtrim($href,'/').'/'.$path;
+			}
+			if($p){
+				if(!isset($this->hashs[$href])||!in_array($hash,$this->hashs[$href]))
+					$this->hashs[$href][] = $hash;
 			}
 			
-			$href = $baseHref;
-			if($path)
-				$href = rtrim($href,'/').'/'.$path;
 			$this->scrap($href,$selector,$path);			
 		}
 		
 		$xpath = new \DOMXpath($dom);
 		$content = $dom->saveHTML($xpath->query($selector)[0]);
-		if(!isset($this->hashs[$uri])){
-			$this->addContent($uri,$content);
+		if(!isset($this->hashs[$url])){
+			$this->addContent($url,$content);
 		}
 		else{
 			$delimiters = [];
-			foreach($this->hashs[$uri] as $h)
+			foreach($this->hashs[$url] as $h)
 				$delimiters[] = 'id="'.$h.'"';
 			$x = $this->multiExplode($delimiters,$content);
 			$l = count($x)-1;
 			foreach($x as $i=>$content){
-				$h = $i?'#'.$this->hashs[$uri][$i-1]:'';
+				$h = $i?'#'.$this->hashs[$url][$i-1]:'';
 				if(!$i)
 					$content = $content.'>';
 				elseif($i==$l)
 					$content = '<'.$content;
 				else
 					$content = '<'.$content.'>';
-				$this->addContent($uri.$h,$content);
+				$this->addContent($url.$h,$content);
 			}
 		}
 		
@@ -95,8 +115,17 @@ class Crawler{
 	private function multiExplode($delimiters,$string) {
 		return explode($delimiters[0],strtr($string,array_combine(array_slice($delimiters,1),array_fill(0,count($delimiters)-1,array_shift($delimiters)))));
 	}
+	private function getDomain($path){
+		$parts = parse_url($path);
+		$host_names = explode('.', $parts['host']);
+		$c = count($host_names);
+		return $host_names[$c-2].'.'.$host_names[$c-1];
+	}
 	private function addContent($path,$content){
 		$content = preg_replace('/\s+/', ' ', strip_tags($content));
+		if($this->domainSubstitution){
+			$path = str_replace($this->getDomain($path),$this->domainSubstitution,$path);
+		}
 		if($this->contentCallback)
 			call_user_func($this->contentCallback,$path,$content);
 		else

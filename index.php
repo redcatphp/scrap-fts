@@ -12,4 +12,7 @@ $db = $bases['scrapfts'];
 $crawler->setContentCallback(function($path,$content)use($db){
 	$db['page'][$path] = ['content_fulltext_'=>$content];
 });
+$crawler->enableSubdomains();
 $crawler->scrap($url->getBaseHref(),'*/main/article');
+
+//echo '<pre>';print_r($crawler->getContents());echo '</pre>';
