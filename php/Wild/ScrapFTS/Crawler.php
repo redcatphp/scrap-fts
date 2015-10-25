@@ -87,10 +87,12 @@ class Crawler{
 			$this->scrap($href,$selector,$path);			
 		}
 		
+		$title = $dom->getElementsByTagName('title')[0]->textContent;
+
 		$xpath = new \DOMXpath($dom);
 		$content = $dom->saveHTML($xpath->query($selector)[0]);
 		if(!isset($this->hashs[$url])){
-			$this->addContent($url,$content);
+			$this->addContent($url,$content,$title);
 		}
 		else{
 			$delimiters = [];
@@ -106,7 +108,7 @@ class Crawler{
 					$content = '<'.$content;
 				else
 					$content = '<'.$content.'>';
-				$this->addContent($url.$h,$content);
+				$this->addContent($url.$h,$content,$title.($hash?' '.$hash:''));
 			}
 		}
 		
@@ -121,15 +123,16 @@ class Crawler{
 		$c = count($host_names);
 		return $host_names[$c-2].'.'.$host_names[$c-1];
 	}
-	private function addContent($path,$content){
+	private function addContent($path,$content,$title){
 		$content = preg_replace('/\s+/', ' ', strip_tags($content));
+		$title = preg_replace('/\s+/', ' ', $title);
 		if($this->domainSubstitution){
 			$path = str_replace($this->getDomain($path),$this->domainSubstitution,$path);
 		}
 		if($this->contentCallback)
-			call_user_func($this->contentCallback,$path,$content);
+			call_user_func($this->contentCallback,$path,$content,$title);
 		else
-			$this->contents[$path] = $content;
+			$this->contents[$path] = [$content,$title];
 	}
 	function getUrls(){
 		return $this->urls;
