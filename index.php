@@ -9,6 +9,8 @@ $bases = $di->create('Wild\DataMap\Bases');
 $bases['scrapfts'] = ['dsn'=>'sqlite:'.SURIKAT_CWD.'.data/scrapfts.sqlite'];
 $db = $bases['scrapfts'];
 
+//$db->debug();
+
 ignore_user_abort(false);
 set_time_limit(0);
 if(php_sapi_name()!='cli'){
