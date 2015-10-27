@@ -7,11 +7,13 @@ class Crawler{
 	private $contentCallback;
 	private $enableSubdomains;
 	private $domainSubstitution;
-	function __construct($contentCallback=null,$domainSubstitution=null){
+	private $displayUrl;
+	function __construct($contentCallback=null,$domainSubstitution=null,$displayUrl=true){
 		if($contentCallback)
 			$this->setContentCallback($contentCallback);
 		if($domainSubstitution)
 			$this->setDomainSubstitution($domainSubstitution);
+		$this->displayUrl($displayUrl);
 	}
 	function setDomainSubstitution($domainSubstitution){
 		$this->domainSubstitution = $domainSubstitution;
@@ -22,9 +24,13 @@ class Crawler{
 	function enableSubdomains($enableSubdomains=true){
 		$this->enableSubdomains = $enableSubdomains;
 	}
+	function displayUrl($displayUrl=true){
+		$this->displayUrl = $displayUrl;
+	}
 	function scrap($url,$selector='body'){
 		if(in_array($url,$this->urls))
 			return;
+		$this->urls[] = $url;
 			
 		$ch = curl_init($url);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -32,11 +38,20 @@ class Crawler{
 		$mime = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
 		if(substr($mime,0,10)!='text/html;')
 			return;
+		if(curl_getinfo($ch, CURLINFO_HTTP_CODE)!=200)
+			return;
 		
-		$this->urls[] = $url;
-		
-		$dom = new \DOMDocument('1.0');
+		$dom = new \DOMDocument();
 		@$dom->loadHTMLFile($url);
+		
+		foreach($dom->getElementsByTagName('meta') as $meta){
+			$c = $meta->getAttribute('content');
+			if($meta->getAttribute('name')=='robots'&&$c&&strpos($c,'noindex')!==false)
+				return;
+		}
+		
+		if($this->displayUrl)
+			echo "$url\n";
 		
 		$baseTag = $dom->getElementsByTagName('base');
 		if(isset($baseTag[0])){
@@ -87,10 +102,24 @@ class Crawler{
 			$this->scrap($href,$selector,$path);			
 		}
 		
-		$title = $dom->getElementsByTagName('title')[0]->textContent;
+		$tagTitle = $dom->getElementsByTagName('title')[0];
+		if($tagTitle){
+			$title = $tagTitle->textContent;
+		}
+		else{
+			$title = $url;
+		}
 
 		$xpath = new \DOMXpath($dom);
-		$content = $dom->saveHTML($xpath->query($selector)[0]);
+		$this->cleanDOM($dom);
+		$content = '';
+		
+		foreach((array)$selector as $select){
+			foreach($xpath->query($select) as $el){
+				$content .= $el->textContent."\n";
+			}
+		}
+		$content = trim($content);
 		if(!isset($this->hashs[$url])){
 			$this->addContent($url,$content,$title);
 		}
@@ -100,19 +129,40 @@ class Crawler{
 				$delimiters[] = 'id="'.$h.'"';
 			$x = $this->multiExplode($delimiters,$content);
 			$l = count($x)-1;
-			foreach($x as $i=>$content){
+			foreach($x as $i=>$c){
 				$h = $i?'#'.$this->hashs[$url][$i-1]:'';
 				if(!$i)
-					$content = $content.'>';
+					$c = $c.'>';
 				elseif($i==$l)
-					$content = '<'.$content;
+					$c = '<'.$c;
 				else
-					$content = '<'.$content.'>';
-				$this->addContent($url.$h,$content,$title.($hash?' '.$hash:''));
+					$c = '<'.$c.'>';
+				$this->addContent($url.$h,$c,$title.($h?' '.$h:''));
 			}
 		}
 		
 		
+	}
+	private function cleanDOM($dom){
+		foreach($dom->getElementsByTagName('code') as $el){
+			$el->parentNode->removeChild($el);
+		}
+		foreach($dom->getElementsByTagName('abbr') as $el){
+			$title = $el->getAttribute('title');
+			if($title)
+				$title = ' ('.$title.')';
+			$el->parentNode->replaceChild(new \DOMText($el->textContent.$title),$el);
+		}
+		foreach($dom->getElementsByTagName('li') as $el){
+			$el->parentNode->replaceChild(new \DOMText($el->textContent.','),$el);
+		}
+		foreach($dom->getElementsByTagName('img') as $el){
+			$alt = $el->getAttribute('alt');
+			if($alt)
+				$el->parentNode->replaceChild(new \DOMText($alt),$el);
+			else
+				$el->parentNode->removeChild($el);
+		}
 	}
 	private function multiExplode($delimiters,$string) {
 		return explode($delimiters[0],strtr($string,array_combine(array_slice($delimiters,1),array_fill(0,count($delimiters)-1,array_shift($delimiters)))));
@@ -124,7 +174,7 @@ class Crawler{
 		return $host_names[$c-2].'.'.$host_names[$c-1];
 	}
 	private function addContent($path,$content,$title){
-		$content = preg_replace('/\s+/', ' ', strip_tags($content));
+		$content = preg_replace('/\s{2,}/', ' ', strip_tags($content));
 		$title = preg_replace('/\s+/', ' ', $title);
 		if($this->domainSubstitution){
 			$path = str_replace($this->getDomain($path),$this->domainSubstitution,$path);
