@@ -116,7 +116,7 @@ class Crawler{
 		
 		foreach((array)$selector as $select){
 			foreach($xpath->query($select) as $el){
-				$content .= $el->textContent."\n";
+				$content .= $dom->saveHTML($el)."\n";
 			}
 		}
 		$content = trim($content);
