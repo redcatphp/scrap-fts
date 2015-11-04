@@ -1,12 +1,12 @@
 <?php
-require_once __DIR__.'/php/Wild/ScrapFTS/autoload.inc.php';
-use Wild\Wire\Di;
+require_once __DIR__.'/php/Surikat/ScrapFTS/autoload.inc.php';
+use RedCat\Wire\Di;
 $di = Di::getInstance();
 
-$crawler = $di->create('Wild\ScrapFTS\Crawler');
-$url = $di->create('Wild\ScrapFTS\Url');
-$bases = $di->create('Wild\DataMap\Bases');
-$bases['scrapfts'] = ['dsn'=>'sqlite:'.SURIKAT_CWD.'.data/scrapfts.sqlite'];
+$crawler = $di->create('Surikat\ScrapFTS\Crawler');
+$url = $di->create('Surikat\ScrapFTS\Url');
+$bases = $di->create('RedCat\DataMap\Bases');
+$bases['scrapfts'] = ['dsn'=>'sqlite:'.REDCAT_CWD.'.data/scrapfts.sqlite'];
 $db = $bases['scrapfts'];
 
 //$db->debug();

@@ -1,5 +1,5 @@
 <?php
-namespace Wild\ScrapFTS;
+namespace Surikat\ScrapFTS;
 class Crawler{
 	private $urls = [];
 	private $hashs = [];

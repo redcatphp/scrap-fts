@@ -1,5 +1,5 @@
 <?php
-namespace Wild\ScrapFTS;
+namespace Surikat\ScrapFTS;
 class Url {
 	protected $baseHref;
 	protected $suffixHref;
@@ -38,8 +38,8 @@ class Url {
 			}
 			else{
 				$docRoot = $this->server['DOCUMENT_ROOT'].'/';
-				if(defined('SURIKAT_CWD'))
-					$cwd = SURIKAT_CWD;
+				if(defined('REDCAT_CWD'))
+					$cwd = REDCAT_CWD;
 				else
 					$cwd = getcwd();
 				if($docRoot!=$cwd&&strpos($cwd,$docRoot)===0)
