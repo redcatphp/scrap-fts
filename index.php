@@ -27,6 +27,8 @@ if(php_sapi_name()!='cli'){
 }
 
 echo "<pre>";
+if($db->tableExists('page'))
+	$db->drop('page');
 $crawler->setContentCallback(function($path,$content,$title)use($db){
 	//echo $path."\n";
 	//echo $title."\n";
