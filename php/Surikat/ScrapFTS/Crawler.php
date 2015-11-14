@@ -8,7 +8,9 @@ class Crawler{
 	private $enableSubdomains;
 	private $domainSubstitution;
 	private $displayUrl;
-	function __construct($contentCallback=null,$domainSubstitution=null,$displayUrl=true){
+	private $robots;
+	private $urlOrigin;
+	function __construct($contentCallback=null,$domainSubstitution=null,$displayUrl=false){
 		if($contentCallback)
 			$this->setContentCallback($contentCallback);
 		if($domainSubstitution)
@@ -31,6 +33,18 @@ class Crawler{
 		if(in_array($url,$this->urls))
 			return;
 		$this->urls[] = $url;
+		
+		if(!isset($this->robots)){
+			$robots = @file_get_contents(rtrim($url,'/').'/robots.txt');
+			if($robots)
+				$this->robots = new RobotsTxtParser($robots);
+			else
+				$this->robots = false;
+			$this->urlOrigin = $url;
+		}
+		$path = '/'.substr($url,strlen($this->urlOrigin));
+		if($this->robots&&$path!='/'&&$this->robots->isDisallowed($path))
+			return;
 			
 		$ch = curl_init($url);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);

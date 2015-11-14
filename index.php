@@ -30,7 +30,7 @@ echo "<pre>";
 if($db->tableExists('page'))
 	$db->drop('page');
 $crawler->setContentCallback(function($path,$content,$title)use($db){
-	//echo $path."\n";
+	echo $path."\n";
 	//echo $title."\n";
 	//echo str_replace("\n",'\n',$content)."\n\n";
 	$db['page'][$path] = ['content_fulltext_'=>$content,'title'=>$title];
