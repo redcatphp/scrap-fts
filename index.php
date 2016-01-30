@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__.'/php/Surikat/ScrapFTS/autoload.inc.php';
-use RedCat\Wire\Di;
+use RedCat\Ding\Di;
 $di = Di::getInstance();
 
 $crawler = $di->create('Surikat\ScrapFTS\Crawler');
