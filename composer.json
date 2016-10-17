@@ -1,0 +1,26 @@
+{
+    "name": "redcatphp/scrap-fts",
+    "description": "Site scrapper for SQLite full-text search-engine",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "jo",
+            "email": "jo@surikat.pro"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+		"php": ">=5.5.0",
+        "redcatphp/ding": "^3.9",
+        "redcatphp/datamap": "^1.9",
+        "symfony/css-selector": "^3.1"
+    },
+	"autoload": {
+		"psr-4":{
+			"RedCat\\ScrapFTS\\": "src"
+		}
+	},
+    "require-dev": {
+        "redcatphp/debug": "^1.7"
+    }
+}

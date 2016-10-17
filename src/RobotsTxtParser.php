@@ -1,5 +1,5 @@
 <?php
-namespace Surikat\ScrapFTS;
+namespace RedCat\ScrapFTS;
 /**
  * Class for parsing robots.txt files
  *

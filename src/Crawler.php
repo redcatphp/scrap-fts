@@ -1,5 +1,5 @@
 <?php
-namespace Surikat\ScrapFTS;
+namespace RedCat\ScrapFTS;
 class Crawler{
 	private $urls = [];
 	private $hashs = [];
@@ -45,7 +45,6 @@ class Crawler{
 		$path = '/'.substr($url,strlen($this->urlOrigin));
 		if($this->robots&&$path!='/'&&$this->robots->isDisallowed($path))
 			return;
-			
 		$ch = curl_init($url);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		curl_exec($ch);
