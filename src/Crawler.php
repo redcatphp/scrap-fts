@@ -186,11 +186,16 @@ class Crawler{
 		$c = count($host_names);
 		return $host_names[$c-2].'.'.$host_names[$c-1];
 	}
+	private function getScheme($path){
+		$parts = parse_url($path);
+		return $parts['scheme'];
+	}
 	private function addContent($path,$content,$title){
 		$content = preg_replace('/\s{2,}/', ' ', strip_tags($content));
 		$title = preg_replace('/\s+/', ' ', $title);
 		if($this->domainSubstitution){
-			$path = str_replace($this->getDomain($path),$this->domainSubstitution,$path);
+			$path = str_replace($this->getDomain($path),$this->getDomain($this->domainSubstitution),$path);
+			$path = str_replace($this->getScheme($path).'://',$this->getScheme($this->domainSubstitution).'://',$path);
 		}
 		if($this->contentCallback)
 			call_user_func($this->contentCallback,$path,$content,$title);
