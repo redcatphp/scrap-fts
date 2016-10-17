@@ -153,7 +153,9 @@ $selectorsArray = [];
 foreach(explode(',',$selectors) as $selector){
 	$selectorsArray[] = $converter->toXPath(trim($selector));
 }
+touch($dbfile.'.working');
 $crawler->scrap($url,$selectorsArray);
 chmod($dbfile,0777);
+unlink($dbfile.'.working');
 echo "Done\n";
 echo "</pre>";
