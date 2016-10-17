@@ -149,6 +149,11 @@ $crawler->setContentCallback(function($path,$content,$title)use($db){
 	$db['page'][$path] = ['content_fulltext_'=>$content,'title'=>$title];
 });
 $crawler->enableSubdomains();
-$crawler->scrap($url,[$converter->toXPath($selectors)]);
+$selectorsArray = [];
+foreach(explode(',',$selectors) as $selector){
+	$selectorsArray[] = $converter->toXPath(trim($selector));
+}
+$crawler->scrap($url,$selectorsArray);
+chmod($dbfile,0777);
 echo "Done\n";
 echo "</pre>";
